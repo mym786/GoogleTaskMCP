@@ -72,6 +72,13 @@ export class GoogleTasksAuth {
   }
 
   private getCredentials() {
+    // Try to build credentials from individual environment variables first
+    const envCredentials = this.buildCredentialsFromEnv();
+    if (envCredentials) {
+      return envCredentials;
+    }
+
+    // Fall back to existing methods
     const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
     const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
     
@@ -110,7 +117,45 @@ export class GoogleTasksAuth {
       }
     }
     
-    throw new Error('Google credentials not found. Set GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON environment variable, or create a .env file.');
+    throw new Error('Google credentials not found. Set individual environment variables (GOOGLE_SERVICE_ACCOUNT_TYPE, GOOGLE_PROJECT_ID, etc.), GOOGLE_APPLICATION_CREDENTIALS, GOOGLE_CREDENTIALS_JSON, or create a .env file.');
+  }
+
+  private buildCredentialsFromEnv() {
+    const requiredFields = [
+      'GOOGLE_SERVICE_ACCOUNT_TYPE',
+      'GOOGLE_PROJECT_ID', 
+      'GOOGLE_PRIVATE_KEY_ID',
+      'GOOGLE_PRIVATE_KEY',
+      'GOOGLE_CLIENT_EMAIL',
+      'GOOGLE_CLIENT_ID',
+      'GOOGLE_AUTH_URI',
+      'GOOGLE_TOKEN_URI'
+    ];
+
+    // Check if all required fields are present
+    const missingFields = requiredFields.filter(field => !process.env[field]);
+    if (missingFields.length > 0) {
+      return null; // Not all fields present, fall back to other methods
+    }
+
+    try {
+      return {
+        type: process.env.GOOGLE_SERVICE_ACCOUNT_TYPE,
+        project_id: process.env.GOOGLE_PROJECT_ID,
+        private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'), // Handle escaped newlines
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        auth_uri: process.env.GOOGLE_AUTH_URI,
+        token_uri: process.env.GOOGLE_TOKEN_URI,
+        auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL || 'https://www.googleapis.com/oauth2/v1/certs',
+        client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL,
+        universe_domain: process.env.GOOGLE_UNIVERSE_DOMAIN || 'googleapis.com'
+      };
+    } catch (error) {
+      logger.error('Failed to build credentials from environment variables', error instanceof Error ? error : new Error(String(error)));
+      throw new Error('Invalid service account environment variables');
+    }
   }
 
   async getTasksClient(): Promise<tasks_v1.Tasks> {
