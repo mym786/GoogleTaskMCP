@@ -1,5 +1,3 @@
-import { writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
 
 export enum LogLevel {
     ERROR = 0,
@@ -10,21 +8,10 @@ export enum LogLevel {
 
 export class Logger {
     private logLevel: LogLevel;
-    private logFile: string;
-    private logDir: string;
 
-    constructor(logLevel: LogLevel = LogLevel.INFO, logFile: string = 'app.log') {
+    constructor(logLevel: LogLevel = LogLevel.INFO) {
         this.logLevel = logLevel;
-        this.logDir = join(process.cwd(), 'logs');
-        this.logFile = join(this.logDir, logFile);
-        
-        // Create logs directory if it doesn't exist
-        if (!existsSync(this.logDir)) {
-            mkdirSync(this.logDir, { recursive: true });
-        }
-        
-        // Initialize log file with startup message
-        this.writeToFile('INFO', 'Logger initialized');
+        console.log(this.formatMessage('INFO', 'Logger initialized'));
     }
 
     private formatMessage(level: string, message: string, error?: Error): string {
@@ -38,17 +25,27 @@ export class Logger {
             }
         }
         
-        return logEntry + '\n';
+        return logEntry;
     }
 
-    private writeToFile(level: string, message: string, error?: Error): void {
-        try {
-            const logEntry = this.formatMessage(level, message, error);
-            appendFileSync(this.logFile, logEntry);
-        } catch (err) {
-            // Fallback to console if file writing fails
-            console.error('Failed to write to log file:', err);
-            console.error('Original log:', level, message, error);
+    private logToConsole(level: string, message: string, error?: Error): void {
+        const logEntry = this.formatMessage(level, message, error);
+        
+        switch (level) {
+            case 'ERROR':
+                console.error(logEntry);
+                break;
+            case 'WARN':
+                console.warn(logEntry);
+                break;
+            case 'INFO':
+                console.info(logEntry);
+                break;
+            case 'DEBUG':
+                console.debug(logEntry);
+                break;
+            default:
+                console.log(logEntry);
         }
     }
 
@@ -58,29 +55,25 @@ export class Logger {
 
     error(message: string, error?: Error): void {
         if (this.shouldLog(LogLevel.ERROR)) {
-            this.writeToFile('ERROR', message, error);
-            // Don't log to console in MCP mode - it interferes with JSON protocol
+            this.logToConsole('ERROR', message, error);
         }
     }
 
     warn(message: string, error?: Error): void {
         if (this.shouldLog(LogLevel.WARN)) {
-            this.writeToFile('WARN', message, error);
-            // Don't log to console in MCP mode - it interferes with JSON protocol
+            this.logToConsole('WARN', message, error);
         }
     }
 
     info(message: string): void {
         if (this.shouldLog(LogLevel.INFO)) {
-            this.writeToFile('INFO', message);
-            // Don't log to console in MCP mode - it interferes with JSON protocol
+            this.logToConsole('INFO', message);
         }
     }
 
     debug(message: string): void {
         if (this.shouldLog(LogLevel.DEBUG)) {
-            this.writeToFile('DEBUG', message);
-            // Don't log to console in MCP mode - it interferes with JSON protocol
+            this.logToConsole('DEBUG', message);
         }
     }
 
