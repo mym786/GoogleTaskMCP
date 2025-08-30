@@ -121,16 +121,38 @@ process.on('SIGINT', () => {
     logger.info('Received SIGINT signal, shutting down gracefully');
     process.exit(0);
 });
-try {
-    const server = new GoogleTasksMCPServer();
-    server.run().catch((error) => {
-        logger.error('Server run failed', error);
-        console.error('Server run failed:', error);
-        process.exit(1);
-    });
+// Export handler for Vercel
+export default async function handler(_req, res) {
+    try {
+        // For Vercel, we'll return server info instead of running stdio
+        res.status(200).json({
+            name: 'google-tasks-mcp-server',
+            version: '1.0.0',
+            status: 'running',
+            message: 'Google Tasks MCP Server is available'
+        });
+    } catch (error) {
+        logger.error('Handler error', error instanceof Error ? error : new Error(String(error)));
+        res.status(500).json({
+            error: 'Internal server error',
+            message: error instanceof Error ? error.message : String(error)
+        });
+    }
 }
-catch (error) {
-    logger.error('Failed to create server instance', error instanceof Error ? error : new Error(String(error)));
-    console.error('Failed to create server instance:', error);
-    process.exit(1);
+
+// Keep the original server code for local development
+if (process.env.NODE_ENV !== 'production' && typeof process !== 'undefined' && process.argv && process.argv[1] && process.argv[1].includes('index.js')) {
+    try {
+        const server = new GoogleTasksMCPServer();
+        server.run().catch((error) => {
+            logger.error('Server run failed', error);
+            console.error('Server run failed:', error);
+            process.exit(1);
+        });
+    }
+    catch (error) {
+        logger.error('Failed to create server instance', error instanceof Error ? error : new Error(String(error)));
+        console.error('Failed to create server instance:', error);
+        process.exit(1);
+    }
 }
