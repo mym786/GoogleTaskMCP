@@ -11,8 +11,5 @@
       "src": "/api/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "env": {
-    "GOOGLE_APPLICATION_CREDENTIALS": "@google_credentials"
-  }
+  ]
 }
