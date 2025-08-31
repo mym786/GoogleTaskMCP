@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-export {};
+export default function handler(_req: any, res: any): Promise<void>;

@@ -9,7 +9,7 @@ export class GoogleTasksAuth {
     constructor() {
         try {
             logger.info('Initializing Google Tasks authentication');
-            this.loadEnvFromFile();
+            //this.loadEnvFromFile();
             this.auth = new GoogleAuth({
                 scopes: ['https://www.googleapis.com/auth/tasks'],
                 credentials: this.getCredentials()
@@ -117,10 +117,10 @@ export class GoogleTasksAuth {
             'GOOGLE_TOKEN_URI'
         ];
         // Check if all required fields are present
-        const missingFields = requiredFields.filter(field => !process.env[field]);
-        if (missingFields.length > 0) {
-            return null; // Not all fields present, fall back to other methods
-        }
+        // const missingFields = requiredFields.filter(field => !process.env[field]);
+        // if (missingFields.length > 0) {
+        //   return null; // Not all fields present, fall back to other methods
+        // }
         try {
             return {
                 type: process.env.GOOGLE_SERVICE_ACCOUNT_TYPE,
@@ -129,8 +129,8 @@ export class GoogleTasksAuth {
                 private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'), // Handle escaped newlines
                 client_email: process.env.GOOGLE_CLIENT_EMAIL,
                 client_id: process.env.GOOGLE_CLIENT_ID,
-                auth_uri: process.env.GOOGLE_AUTH_URI,
-                token_uri: process.env.GOOGLE_TOKEN_URI,
+                auth_uri: process.env.GOOGLE_AUTH_URI || 'https://accounts.google.com/o/oauth2/auth',
+                token_uri: process.env.GOOGLE_TOKEN_URI || 'https://oauth2.googleapis.com/token',
                 auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL || 'https://www.googleapis.com/oauth2/v1/certs',
                 client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL,
                 universe_domain: process.env.GOOGLE_UNIVERSE_DOMAIN || 'googleapis.com'

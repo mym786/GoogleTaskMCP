@@ -131,7 +131,8 @@ export default async function handler(_req, res) {
             status: 'running',
             message: 'Google Tasks MCP Server is available'
         });
-    } catch (error) {
+    }
+    catch (error) {
         logger.error('Handler error', error instanceof Error ? error : new Error(String(error)));
         res.status(500).json({
             error: 'Internal server error',
@@ -139,7 +140,6 @@ export default async function handler(_req, res) {
         });
     }
 }
-
 // Keep the original server code for local development
 if (process.env.NODE_ENV !== 'production' && typeof process !== 'undefined' && process.argv && process.argv[1] && process.argv[1].includes('index.js')) {
     try {
